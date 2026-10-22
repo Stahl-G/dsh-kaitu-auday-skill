@@ -870,7 +870,7 @@ def main():
     commands.add_parser("doctor")
     discover = commands.add_parser("discover")
     discover.add_argument("--peer-to-peer", action="store_true")
-    for name in ["pair", "pair-window"]:
+    for name in ["pair", "pair-window", "pair-dialog"]:
         pair = commands.add_parser(name)
         target = pair.add_mutually_exclusive_group(required=True)
         target.add_argument("--service")
@@ -894,6 +894,7 @@ def main():
     assets.add_argument("--offset", type=int, default=0)
     read = commands.add_parser("read")
     read.add_argument("id")
+    commands.add_parser("handoff", help="Render selected cached IDs from JSON stdin as inbox notes")
     audio = commands.add_parser("audio")
     audio.add_argument("id")
     export = commands.add_parser("export", help="Export cached text as readable daily Markdown files")
@@ -996,7 +997,7 @@ def main():
         return
     app = Auday(args.home, args.profile)
     try:
-        if args.command in ["pair", "pair-window"]:
+        if args.command in ["pair", "pair-window", "pair-dialog"]:
             if args.command == "pair-window":
                 bridge()
                 command = [
@@ -1028,6 +1029,8 @@ def main():
                 )
                 return
             command = [str(bridge()), "pair", "--profile", app.keychain_account]
+            if args.command == "pair-dialog":
+                command.append("--dialog")
             config = {}
             if args.service:
                 command += ["--service", args.service]
@@ -1042,6 +1045,9 @@ def main():
             config["peerToPeer"] = args.peer_to_peer
             subprocess.run(command, check=True)
             atomic_json(app.root / "connection.json", config)
+        elif args.command == "handoff":
+            from handoff import selected_notes
+            dump(selected_notes(app, json.load(sys.stdin)))
         elif args.command == "sync":
             dump(app.sync())
         elif args.command == "status":
