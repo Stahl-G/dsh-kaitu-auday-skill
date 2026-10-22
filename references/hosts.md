@@ -19,7 +19,11 @@ or starts a synchronization loop. The native Swift helper builds on first live
 connection using the installed toolchain. It is not a signed precompiled helper;
 clean-Mac packaging and platform permissions remain separate release checks.
 
-In Extra, install the fork bundle by URL, then open Auday. Check prerequisites,
+Install the experimental DSH package `kaitu-auday@0.1.0` from
+`https://github.com/Stahl-G/dsh-kaitu-auday-skill/releases/download/v0.1.0/kaitu-auday-0.1.0.tgz`,
+then open Auday. Use the matching release SHA-256 checksum; do not install from
+the fork main branch while the adapter PR is unmerged. The GitHub release is a
+prerelease and does not establish real-phone or clean-Mac support. Check prerequisites,
 find the phone, and choose Connect. This explicit action opens a native hidden
 password dialog and saves successful pairing through the upstream Keychain code.
 The original TTY pairing path is retained for common skill hosts. Cancel or page

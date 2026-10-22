@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Stahl-G/auday-skill.git"
+    "url": "https://github.com/Stahl-G/dsh-kaitu-auday-skill.git"
   },
   "exports": {
     ".": "./dist/index.js",
