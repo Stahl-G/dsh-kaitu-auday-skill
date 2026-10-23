@@ -20,7 +20,7 @@ export class AudayService extends TypertRemoteService {
     if (operation === 'import') {
       const preview = await this.runner.run('preview', args);
       if (JSON.stringify(preview.notes.map((note: { name: string }) => note.name)) !== JSON.stringify(args.names))
-        throw new Error('Source changed; preview this selection again');
+        throw new Error('source_changed');
       return JSON.stringify(submitNotes(this.workspace, preview.notes));
     }
     return JSON.stringify(await this.runner.run(operation, args));

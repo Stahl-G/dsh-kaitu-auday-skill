@@ -36,6 +36,7 @@
     "scripts/*.tsv",
     "scripts/link/Package.swift",
     "scripts/link/Sources",
+    "scripts/link/Tests",
     "SKILL.md",
     "references",
     "agents",

@@ -9,14 +9,14 @@ import styles from './client.css';
 export const inject = ['slots', 'remote'];
 type Request = (operation: string, input?: object) => Promise<any>;
 const labels = {
-  zh: { title: 'Auday', check: '检查依赖', discover: '查找手机', pair: '连接（在本机输入密码并保存到钥匙串）',
+  zh: { title: 'Auday', check: '检查依赖', discover: '查找手机', pair: '连接',
     sync: '同步一次', list: '查看本机副本', preview: '预览所选', submit: '送入开图收件箱', cancel: '取消',
     next: '下一页', previous: '上一页', busy: '正在处理…', cached: '上次同步', select: '选择记录',
-    sent: '已送入开图收件箱，等待处理', connection: '连接手机', library: '本机副本', empty: '同步后，查看本机副本，选择要送入开图的原文。', selected: '已选', ready: '连接依赖已就绪', connected: '已连接，可以同步一次。', synced: '同步完成，可以查看本机副本。', noPhone: '未找到手机。请打开 Auday 接入页，并保持同一 Wi-Fi。', original: '所选原文', missing: '需要已有 Python 3 与 Xcode 命令行工具；此插件不安装依赖。' },
-  en: { title: 'Auday', check: 'Check prerequisites', discover: 'Find phone', pair: 'Connect (local password; save in Keychain)',
+    sent: '已送入开图收件箱，等待处理', connection: '连接手机', library: '本机副本', empty: '同步后，查看本机副本，选择要送入开图的原文。', selected: '已选', ready: '连接依赖已就绪', connected: '已连接，可以同步一次。', synced: '同步完成，可以查看本机副本。', noPhone: '未找到手机。请打开 Auday 接入页，并保持同一 Wi-Fi。', original: '所选原文' },
+  en: { title: 'Auday', check: 'Check prerequisites', discover: 'Find phone', pair: 'Connect',
     sync: 'Sync once', list: 'Browse local copy', preview: 'Preview selection', submit: 'Import as inbox notes', cancel: 'Cancel',
     next: 'Next', previous: 'Previous', busy: 'Working…', cached: 'Last synced', select: 'Select record',
-    sent: 'Submitted to the Kaitu inbox for processing', connection: 'Connect your phone', library: 'Local copy', empty: 'After syncing, browse the local copy and select original records to send to Kaitu.', selected: 'Selected', ready: 'Connection prerequisites are ready', connected: 'Connected. You can sync once now.', synced: 'Sync complete. You can browse the local copy.', noPhone: 'No phone found. Open the Auday access page and stay on the same Wi-Fi.', original: 'Selected original text', missing: 'Requires existing Python 3 and Xcode Command Line Tools. No dependencies are installed.' },
+    sent: 'Submitted to the Kaitu inbox for processing', connection: 'Connect your phone', library: 'Local copy', empty: 'After syncing, browse the local copy and select original records to send to Kaitu.', selected: 'Selected', ready: 'Connection prerequisites are ready', connected: 'Connected. You can sync once now.', synced: 'Sync complete. You can browse the local copy.', noPhone: 'No phone found. Open the Auday access page and stay on the same Wi-Fi.', original: 'Selected original text' },
 };
 
 function useTheme() {
@@ -47,13 +47,22 @@ function AudayPage({ request }: { request: Request }) {
   const errorText = (error: unknown) => {
     const text = String(error).replace(/^Error: /, '');
     const known: Record<string, [string, string]> = {
+      device_required: ['请先查找并选择手机，再连接。', 'Find and select your phone before connecting.'],
+      invalid_page: ['无法打开这一页，请重新查看本机副本。', 'This page cannot be opened. Browse the local copy again.'],
+      unknown_operation: ['无法执行此操作，请重新打开 Auday 页面。', 'This operation is unavailable. Reopen the Auday page.'],
+      operation_failed: ['操作未完成，请检查依赖或手机连接后重试。', 'The operation did not complete. Check prerequisites or the phone connection and retry.'],
+      selection_too_large: ['所选内容过多，请减少记录后重新预览。', 'The selection is too large. Select fewer records and preview again.'],
+      source_changed: ['来源内容已变化，请重新预览所选记录后再送入收件箱。', 'The source changed. Preview the selection again before sending it to the inbox.'],
+      workspace_missing: ['尚未配置开图工作区，请在插件配置中选择已有工作区。', 'No Kaitu workspace is configured. Select an existing workspace in the plugin configuration.'],
+      invalid_handoff: ['无法提交所选原文，请重新查看本机副本并预览。', 'The selected source could not be submitted. Browse the local copy and preview again.'],
+      'This operation was aborted': ['操作已取消。', 'The operation was canceled.'],
       python_unavailable: ['未找到可用的 Python 3。请先安装 Python 3，或在插件配置中选择已有解释器。', 'Python 3 was not found. Install it or select an existing interpreter in the plugin configuration.'],
       apple_command_line_tools_missing: ['缺少 Xcode 命令行工具。请先完成 Apple Command Line Tools 安装，再检查依赖。', 'Xcode Command Line Tools are missing. Complete their installation, then check prerequisites again.'],
       swift_toolchain_unavailable: ['当前 Xcode 工具链中没有可用的 Swift。请检查开发工具选择。', 'Swift is unavailable in the selected Xcode toolchain. Check your developer tools selection.'],
       swift_5_9_or_later_required: ['连接需要 Swift 5.9 或更新版本。请更新 Xcode 命令行工具。', 'Connection requires Swift 5.9 or newer. Update Xcode Command Line Tools.'],
       macOS_required: ['连接 Auday 需要 macOS。', 'Connecting Auday requires macOS.'],
     };
-    return known[text]?.[zh ? 0 : 1] || text;
+    return (known[text] || known.operation_failed)![zh ? 0 : 1];
   };
   const run = async (operation: string, input = {}) => {
     setBusy(true); setMessage(''); setFailed(false);
@@ -78,7 +87,7 @@ function AudayPage({ request }: { request: Request }) {
     <style>{styles}</style>
     {!embedded && <header className="auday-intro"><h1>{t.title}</h1></header>}
     <section className="auday-card" aria-label={t.connection}>
-      <h2>{t.connection}</h2><p>{t.missing}</p>
+      <h2>{t.connection}</h2>
       <div className="auday-row">
         <button disabled={busy} onClick={() => run('doctor')}>{t.check}</button>
         <button disabled={busy} onClick={() => run('discover')}>{t.discover}</button>

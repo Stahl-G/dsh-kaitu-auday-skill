@@ -78,18 +78,18 @@ var AudayRunner = class {
         args = [operation];
         break;
       case "pair":
-        if (typeof input.service !== "string" || !input.service.trim()) throw new Error("Select a device");
+        if (typeof input.service !== "string" || !input.service.trim()) throw new Error("device_required");
         args = ["pair-dialog", "--service", input.service];
         break;
       case "search":
-        if (!Number.isInteger(input.offset ?? 0) || (input.offset ?? 0) < 0) throw new Error("Invalid page");
+        if (!Number.isInteger(input.offset ?? 0) || (input.offset ?? 0) < 0) throw new Error("invalid_page");
         args = ["search", "--limit", "20", "--offset", String(input.offset ?? 0)];
         break;
       case "preview":
         args = ["handoff"];
         break;
       default:
-        throw new Error("Unknown Auday operation");
+        throw new Error("unknown_operation");
     }
     const controller = new AbortController();
     this.controllers.add(controller);
@@ -115,8 +115,8 @@ var AudayRunner = class {
       }
     };
     const parse = ({ exitCode, output }) => {
-      if (exitCode !== 0) throw new Error("Auday operation did not complete; check local prerequisites or retry connection");
-      if (output.lossy) throw new Error("Selection too large; select fewer records");
+      if (exitCode !== 0) throw new Error("operation_failed");
+      if (output.lossy) throw new Error("selection_too_large");
       return JSON.parse(output.text);
     };
     try {
@@ -145,12 +145,12 @@ var AudayRunner = class {
 };
 function submitNotes(workspace, notes) {
   if (!isAbsolute(workspace) || !existsSync(join(workspace, ".kaitu/config.json")))
-    throw new Error("Configure an existing Kaitu workspace");
+    throw new Error("workspace_missing");
   const directory = join(workspace, "inbox/agents");
   mkdirSync(directory, { recursive: true });
   for (const note of notes) {
     if (!/^auday-[a-f0-9]{64}-[a-f0-9]{64}\.md$/.test(note.name) || typeof note.text !== "string")
-      throw new Error("Invalid Auday handoff");
+      throw new Error("invalid_handoff");
     const path = join(directory, note.name);
     const temporary = join(directory, `.auday-${randomUUID()}.tmp`);
     writeFileSync(temporary, note.text, { flag: "wx", mode: 384 });
@@ -187,7 +187,7 @@ var AudayService = class extends (_a = TypertRemoteService, _request_dec = [Remo
     if (operation === "import") {
       const preview = await this.runner.run("preview", args);
       if (JSON.stringify(preview.notes.map((note) => note.name)) !== JSON.stringify(args.names))
-        throw new Error("Source changed; preview this selection again");
+        throw new Error("source_changed");
       return JSON.stringify(submitNotes(this.workspace, preview.notes));
     }
     return JSON.stringify(await this.runner.run(operation, args));

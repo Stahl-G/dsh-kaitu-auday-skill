@@ -32,7 +32,13 @@ func localPassword() throws -> String {
 
 func dialogPassword() throws -> String {
     // Native local prompt: the secret never passes through the Host or model.
-    let script = NSAppleScript(source: "text returned of (display dialog \"Auday 通信密码\" default answer \"\" with hidden answer buttons {\"Cancel\", \"Connect\"} default button \"Connect\")")
+    let chinese = Locale.preferredLanguages.first?.hasPrefix("zh") == true
+    let prompt = chinese
+        ? "输入 Auday 通信密码。连接成功后保存到本机钥匙串，供手动只读同步。"
+        : "Enter the Auday communication password. After connection, save it in this Mac's Keychain for manual read-only sync."
+    let cancel = chinese ? "取消" : "Cancel"
+    let connect = chinese ? "连接" : "Connect"
+    let script = NSAppleScript(source: "text returned of (display dialog \"\(prompt)\" default answer \"\" with hidden answer buttons {\"\(cancel)\", \"\(connect)\"} default button \"\(connect)\")")
     var error: NSDictionary?
     guard let result = script?.executeAndReturnError(&error), error == nil,
           let password = result.stringValue else {

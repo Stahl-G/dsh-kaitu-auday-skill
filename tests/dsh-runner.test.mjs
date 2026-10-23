@@ -25,7 +25,7 @@ test('fixed operations reject arbitrary commands; cancellation waits for the man
     async waitForExit() { waited = true; return true; },
   };
   const runner = new AudayRunner({ resolveExecutable: async value => value, spawn: () => child }, '/synthetic', '/synthetic-cache');
-  await assert.rejects(runner.run('shell', { command: 'echo secret' }), /Unknown Auday operation/);
+  await assert.rejects(runner.run('shell', { command: 'echo secret' }), /unknown_operation/);
   const running = runner.run('sync');
   await Promise.resolve();
   await runner.close();
