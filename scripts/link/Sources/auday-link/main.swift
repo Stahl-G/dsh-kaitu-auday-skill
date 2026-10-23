@@ -30,6 +30,24 @@ func localPassword() throws -> String {
     return password
 }
 
+func dialogPassword() throws -> String {
+    // Native local prompt: the secret never passes through the Host or model.
+    let chinese = Locale.preferredLanguages.first?.hasPrefix("zh") == true
+    let prompt = chinese
+        ? "输入 Auday 通信密码。连接成功后保存到本机钥匙串，供手动只读同步。"
+        : "Enter the Auday communication password. After connection, save it in this Mac's Keychain for manual read-only sync."
+    let cancel = chinese ? "取消" : "Cancel"
+    let connect = chinese ? "连接" : "Connect"
+    let script = NSAppleScript(source: "text returned of (display dialog \"\(prompt)\" default answer \"\" with hidden answer buttons {\"\(cancel)\", \"\(connect)\"} default button \"\(connect)\")")
+    var error: NSDictionary?
+    guard let result = script?.executeAndReturnError(&error), error == nil,
+          let password = result.stringValue else {
+        throw LinkError.message("password_input_cancelled")
+    }
+    _ = try CommunicationPassword.key(password)
+    return password
+}
+
 func saveSecret(_ password: String, profile: String) throws {
     let key: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: profile]
     let status = SecItemUpdate(key as CFDictionary, [kSecValueData as String: Data(password.utf8)] as CFDictionary)
@@ -67,11 +85,11 @@ do {
         try emit(call(endpoint: try endpoint(input), password: password, request: request,
                       peerToPeer: input["peerToPeer"] as? Bool ?? false, timeout: input["timeout"] as? Double ?? 10))
     case "pair":
-        guard isatty(STDIN_FILENO) == 1, let profile = option("--profile") else { throw LinkError.message("pair_requires_local_terminal_and_profile") }
+        guard (args.contains("--dialog") || isatty(STDIN_FILENO) == 1), let profile = option("--profile") else { throw LinkError.message("pair_requires_local_terminal_and_profile") }
         var destination: [String: Any] = [:]
         if let name = option("--service") { destination["service"] = name }
         else { destination["host"] = option("--host"); destination["port"] = UInt16(option("--port") ?? "") }
-        let password = try localPassword()
+        let password = try (args.contains("--dialog") ? dialogPassword() : localPassword())
         let response = try call(endpoint: endpoint(destination), password: password, request: ["op": "status"], peerToPeer: args.contains("--peer-to-peer"))
         guard response["ok"] as? Bool == true else { throw LinkError.message("pair_failed") }
         try saveSecret(password, profile: profile); try emit(response)

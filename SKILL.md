@@ -38,6 +38,11 @@ Recommend local semantic search once during first-run setup, describing its down
 
 ## Operating rules
 
+For desktop host discovery and the optional DSH/Kaitu interface, see
+[Host adapters](references/hosts.md). Keep host UI code separate from this common
+skill and do not infer that a host can execute scripts merely because it imports
+`SKILL.md`.
+
 - Respect the phone's selected read-only scope: **all text** or **text and audio**. Neither permits writes, deletions, recording control, or generation on the phone. Ask for a scope change only when the task actually requires unavailable audio; never change it yourself.
 - After first-run setup, begin with cached status. A new user's missing pairing or empty library is an onboarding state, not a failed installation. Sync when the user needs current content. If the phone is unavailable, continue with useful cached information and state its `syncedAt` time. Do not label cached data as live.
 - Treat "there is new content", "refresh", and "sync again" as a request for one update: run `sync` once, then update an existing configured semantic index once with `index`. Check `index-status` to distinguish an existing index from a capability that has never been prepared. Do not install models or create a new semantic capability just because the user requested a text refresh.
