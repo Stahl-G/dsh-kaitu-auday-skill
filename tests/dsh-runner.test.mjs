@@ -79,3 +79,28 @@ test('a missing Python executable reports the prerequisite without starting a ch
   await assert.rejects(runner.run('doctor'), /python_unavailable/);
   assert.equal(runner.controllers.size, 0);
 });
+
+test('unpaired sync stops before a phone request; known CLI failures keep only their safe code', async () => {
+  let calls = 0, paired = false, failure = 'password_input_cancelled';
+  const runner = new AudayRunner({
+    resolveExecutable: async () => '/synthetic-python',
+    spawn({ argv }) {
+      calls++;
+      const doctor = argv.at(-1) === 'doctor';
+      const text = doctor ? JSON.stringify({ capabilities: { paired, core: { connectionToolchain: { ready: true } } } })
+        : JSON.stringify({ ok: false, error: failure }) + '\n' + JSON.stringify({ ok: false, error: 'private diagnostic must not escape' });
+      return {
+        done: Promise.resolve({ exitCode: doctor ? 0 : 1 }),
+        collected: { stdout: { readFrom: () => ({ lossy: false, text }) } },
+        terminate() {}, async waitForExit() {},
+      };
+    },
+  }, '/synthetic', '/synthetic-cache');
+  await assert.rejects(runner.run('sync'), /^Error: not_paired$/);
+  assert.equal(calls, 1);
+  paired = true;
+  await assert.rejects(runner.run('pair', { service: 'synthetic-phone' }), /^Error: password_input_cancelled$/);
+  failure = 'unrecognized private data';
+  await assert.rejects(runner.run('pair', { service: 'synthetic-phone' }), /^Error: operation_failed$/);
+  assert.equal(runner.children.size, 0);
+});

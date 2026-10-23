@@ -49,7 +49,17 @@ export class AudayRunner {
       }
     };
     const parse = ({ exitCode, output }) => {
-      if (exitCode !== 0) throw new Error('operation_failed');
+      if (exitCode !== 0) {
+        const known = ['not_paired', 'password_input_cancelled', 'use_generated_16_character_communication_password',
+          'authentication_or_connection_failed', 'awaiting_phone_or_wrong_password', 'keychain_save_failed'];
+        for (const line of output.text.split('\n')) {
+          let error;
+          try { error = JSON.parse(line).error; } catch { continue; }
+          const code = typeof error === 'string' ? error.split(':')[0] : '';
+          if (known.includes(code)) throw new Error(code);
+        }
+        throw new Error('operation_failed');
+      }
       if (output.lossy) throw new Error('selection_too_large');
       return JSON.parse(output.text);
     };
@@ -70,6 +80,7 @@ export class AudayRunner {
         const doctor = parse(await execute(command('doctor')));
         const tools = doctor.capabilities.core.connectionToolchain;
         if (!tools.ready) throw new Error(tools.reason);
+        if (operation === 'sync' && !doctor.capabilities.paired) throw new Error('not_paired');
       }
       return parse(await execute(command(...args), operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore'));
     } finally {

@@ -11,11 +11,11 @@ type Request = (operation: string, input?: object) => Promise<any>;
 const labels = {
   zh: { title: 'Auday', check: '检查依赖', discover: '查找手机', pair: '连接',
     sync: '同步一次', list: '查看本机副本', preview: '预览所选', submit: '送入开图收件箱', cancel: '取消',
-    next: '下一页', previous: '上一页', busy: '正在处理…', cached: '上次同步', select: '选择记录',
+    next: '下一页', previous: '上一页', busy: '正在处理…', cached: '上次同步', notSynced: '本机还没有同步副本。请先连接手机，再点「同步一次」。', select: '选择记录',
     sent: '已送入开图收件箱，等待处理', connection: '连接手机', library: '本机副本', empty: '同步后，查看本机副本，选择要送入开图的原文。', selected: '已选', ready: '连接依赖已就绪', connected: '已连接，可以同步一次。', synced: '同步完成，可以查看本机副本。', noPhone: '未找到手机。请打开 Auday 接入页，并保持同一 Wi-Fi。', original: '所选原文' },
   en: { title: 'Auday', check: 'Check prerequisites', discover: 'Find phone', pair: 'Connect',
     sync: 'Sync once', list: 'Browse local copy', preview: 'Preview selection', submit: 'Import as inbox notes', cancel: 'Cancel',
-    next: 'Next', previous: 'Previous', busy: 'Working…', cached: 'Last synced', select: 'Select record',
+    next: 'Next', previous: 'Previous', busy: 'Working…', cached: 'Last synced', notSynced: 'No local copy has been synced. Connect your phone, then choose Sync once.', select: 'Select record',
     sent: 'Submitted to the Kaitu inbox for processing', connection: 'Connect your phone', library: 'Local copy', empty: 'After syncing, browse the local copy and select original records to send to Kaitu.', selected: 'Selected', ready: 'Connection prerequisites are ready', connected: 'Connected. You can sync once now.', synced: 'Sync complete. You can browse the local copy.', noPhone: 'No phone found. Open the Auday access page and stay on the same Wi-Fi.', original: 'Selected original text' },
 };
 
@@ -47,6 +47,12 @@ function AudayPage({ request }: { request: Request }) {
   const errorText = (error: unknown) => {
     const text = String(error).replace(/^Error: /, '');
     const known: Record<string, [string, string]> = {
+      not_paired: ['手机尚未连接成功。请点「连接」，在本机弹窗输入 Auday 接入密码。', 'Your phone is not paired yet. Choose Connect and enter the Auday access password in the local dialog.'],
+      password_input_cancelled: ['已取消密码输入，手机尚未连接。', 'Password entry was canceled; your phone is not connected.'],
+      use_generated_16_character_communication_password: ['请输入 Auday 接入页显示的 16 位通信密码。', 'Enter the 16-character communication password shown on the Auday access page.'],
+      authentication_or_connection_failed: ['连接或验证失败。请核对 Auday 接入密码，并确认两台设备在同一 Wi-Fi。', 'Connection or authentication failed. Check the Auday access password and that both devices use the same Wi-Fi.'],
+      awaiting_phone_or_wrong_password: ['手机未响应或密码不匹配。请保持 Auday 接入页亮屏，并核对密码及 Wi-Fi。', 'The phone did not respond or the password did not match. Keep the Auday access page open and check the password and Wi-Fi.'],
+      keychain_save_failed: ['无法将连接凭据保存到本机钥匙串，连接未完成。', 'The connection credential could not be saved in this Mac’s Keychain; pairing did not complete.'],
       device_required: ['请先查找并选择手机，再连接。', 'Find and select your phone before connecting.'],
       invalid_page: ['无法打开这一页，请重新查看本机副本。', 'This page cannot be opened. Browse the local copy again.'],
       unknown_operation: ['无法执行此操作，请重新打开 Auday 页面。', 'This operation is unavailable. Reopen the Auday page.'],
@@ -75,7 +81,10 @@ function AudayPage({ request }: { request: Request }) {
       } else if (operation === 'discover') {
         setServices(result.services); setService(result.services[0] || '');
         if (!result.services.length) setMessage(t.noPhone);
-      } else if (operation === 'search') { setPage(result); setIds([]); setPreview(null); }
+      } else if (operation === 'search') {
+        setPage(result); setIds([]); setPreview(null);
+        if (!result.syncedAt && !result.records.length) setMessage(t.notSynced);
+      }
       else if (operation === 'preview') setPreview(result);
       else if (operation === 'import') { setMessage(t.sent); setPreview(null); setIds([]); }
       else if (operation === 'pair') setMessage(t.connected);
