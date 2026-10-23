@@ -19,12 +19,11 @@ or starts a synchronization loop. The native Swift helper builds on first live
 connection using the installed toolchain. It is not a signed precompiled helper;
 clean-Mac packaging and platform permissions remain separate release checks.
 
-Install the experimental DSH package `kaitu-auday@0.1.0` from
-`https://github.com/Stahl-G/dsh-kaitu-auday-skill/releases/download/v0.1.0/kaitu-auday-0.1.0.tgz`,
-then open Auday. Use the matching release SHA-256 checksum; do not install from
-the fork main branch while the adapter PR is unmerged. The GitHub release is a
-prerelease and does not establish real-phone or clean-Mac support. Check prerequisites,
-find the phone, and choose Connect. This explicit action opens a native hidden
+Version 0.1.2 is being prepared on the adapter branch; no 0.1.2 release is published.
+For an approved local build, install the packed tarball through DSH's existing
+profile plugin manager. The earlier 0.1.0 experimental prerelease remains a
+separate, unmerged experiment and does not establish real-phone or clean-Mac
+support. Check prerequisites, find the phone, and choose Connect. This explicit action opens a native hidden
 password dialog and saves successful pairing through the upstream Keychain code.
 The original TTY pairing path is retained for common skill hosts. Cancel or page
 unmount terminates the adapter's managed subprocess range.
@@ -59,3 +58,12 @@ real iPhone pairing, native-dialog dismissal on application exit, a clean Mac
 installation, or WorkBuddy/Claude Code runtime compatibility. Those checks need
 their own evidence; persistent pairing and private data access require the
 user's authorization for that session.
+
+The page reads Kaitu's surface, text, control and feedback color variables, with
+the desktop C palette as its standalone fallback. It follows DSH/system dark
+mode. The existing host route `#kaitu-page=kaitu-auday&kaitu-embed=1` suppresses
+the plugin title; the host still owns its loader, navigation and iframe lifetime.
+Content embedding requires Kaitu's host integration in PR #121 (not main at the
+time of this update); no new loader or theme messaging protocol is provided.
+Prerequisite checks reuse the common core's selected CLT/Swift checks before
+live operations; the system Python shim is not started when CLT is absent.

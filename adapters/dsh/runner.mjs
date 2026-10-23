@@ -30,29 +30,49 @@ export class AudayRunner {
     }
     const controller = new AbortController();
     this.controllers.add(controller);
-    let child;
-    try {
-      const python = await this.subprocess.resolveExecutable(this.python, undefined, controller.signal);
+    const execute = async (argv, stdin = 'ignore') => {
       controller.signal.throwIfAborted();
-      child = this.subprocess.spawn({
-        argv: [python, join(this.root, 'scripts/auday.py'), '--home', this.home, ...args],
-        cwd: this.root, graceMs: 1000, signal: controller.signal,
+      const child = this.subprocess.spawn({
+        argv, cwd: this.root, graceMs: 1000, signal: controller.signal,
         env: { AUDAY_PROGRESS: '0' },
-        stdio: { stdin: operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore',
-          stdout: { maxBytes: 16 * 1024 * 1024 }, stderr: { maxBytes: 4096 } },
+        stdio: { stdin, stdout: { maxBytes: 16 * 1024 * 1024 }, stderr: { maxBytes: 4096 } },
       });
       this.children.add(child);
-      const outcome = await child.done;
-      if (outcome.exitCode !== 0) throw new Error('Auday operation did not complete; check local prerequisites or retry connection');
-      const output = child.collected.stdout.readFrom(0);
-      if (output.lossy) throw new Error('Selection too large; select fewer records');
-      return JSON.parse(output.text);
-    } finally {
-      if (child) {
+      try {
+        const outcome = await child.done;
+        controller.signal.throwIfAborted();
+        return { ...outcome, output: child.collected.stdout.readFrom(0) };
+      } finally {
         child.terminate();
         await child.waitForExit();
         this.children.delete(child);
       }
+    };
+    const parse = ({ exitCode, output }) => {
+      if (exitCode !== 0) throw new Error('Auday operation did not complete; check local prerequisites or retry connection');
+      if (output.lossy) throw new Error('Selection too large; select fewer records');
+      return JSON.parse(output.text);
+    };
+    try {
+      let python;
+      try { python = await this.subprocess.resolveExecutable(this.python, undefined, controller.signal); }
+      catch (error) {
+        controller.signal.throwIfAborted();
+        throw new Error('python_unavailable');
+      }
+      // Apple's Python shim can open an installer when CLT is absent. Probe without starting it.
+      if (process.platform === 'darwin' && python === '/usr/bin/python3') {
+        if ((await execute(['/usr/bin/xcode-select', '-p'])).exitCode !== 0)
+          throw new Error('apple_command_line_tools_missing');
+      }
+      const command = (...args) => [python, join(this.root, 'scripts/auday.py'), '--home', this.home, ...args];
+      if (['discover', 'pair', 'sync'].includes(operation)) {
+        const doctor = parse(await execute(command('doctor')));
+        const tools = doctor.capabilities.core.connectionToolchain;
+        if (!tools.ready) throw new Error(tools.reason);
+      }
+      return parse(await execute(command(...args), operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore'));
+    } finally {
       this.controllers.delete(controller);
     }
   }

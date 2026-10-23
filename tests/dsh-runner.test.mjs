@@ -29,7 +29,7 @@ test('fixed operations reject arbitrary commands; cancellation waits for the man
   const running = runner.run('sync');
   await Promise.resolve();
   await runner.close();
-  await assert.rejects(running, /did not complete/);
+  await assert.rejects(running, { name: 'AbortError' });
   assert.equal(terminated && waited, true);
   assert.equal(runner.children.size, 0);
 });
@@ -44,4 +44,38 @@ test('cancel during executable lookup cannot start a late child', async () => {
   await runner.close();
   resolveLookup('/synthetic-python');
   await assert.rejects(running, { name: 'AbortError' });
+});
+
+
+test('missing CLT is actionable and cannot start live operations or the Apple Python shim', async () => {
+  const calls = [];
+  const runner = new AudayRunner({
+    resolveExecutable: async () => '/usr/bin/python3',
+    spawn({ argv }) {
+      calls.push(argv);
+      const shimCheck = argv[0] === '/usr/bin/xcode-select';
+      return {
+        done: Promise.resolve({ exitCode: shimCheck ? 1 : 0 }),
+        collected: { stdout: { readFrom: () => ({ lossy: false, text: JSON.stringify({
+          tools: { swift: '/usr/bin/swift' },
+          capabilities: { core: { connectionToolchain: { ready: false, reason: 'apple_command_line_tools_missing' } } },
+        }) }) } },
+        terminate() {}, async waitForExit() {},
+      };
+    },
+  }, '/synthetic', '/synthetic-cache');
+  for (const operation of ['discover', 'pair', 'sync'])
+    await assert.rejects(runner.run(operation, { service: 'synthetic-phone' }), /apple_command_line_tools_missing/);
+  assert.ok(calls.every(argv => argv[0] === '/usr/bin/xcode-select' || argv.at(-1) === 'doctor'));
+  assert.equal(runner.children.size, 0);
+  assert.equal(runner.controllers.size, 0);
+});
+
+test('a missing Python executable reports the prerequisite without starting a child', async () => {
+  const runner = new AudayRunner({
+    async resolveExecutable() { throw new Error('Executable not found'); },
+    spawn() { assert.fail('No interpreter should have been started'); },
+  }, '/synthetic', '/synthetic-cache');
+  await assert.rejects(runner.run('doctor'), /python_unavailable/);
+  assert.equal(runner.controllers.size, 0);
 });

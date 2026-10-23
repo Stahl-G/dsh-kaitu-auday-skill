@@ -88,6 +88,7 @@ await build({ entryPoints: ["adapters/dsh/service.ts"], outfile: "dist/index.js"
   platform: "node", target: "node22", format: "esm",
   external: ["@deepseek-ai/cordis", "@deepseek-ai/dsh-typert-protocol"], legalComments: "eof" });
 await build({ entryPoints: ["adapters/dsh/client.tsx"], outfile: "dist/client.js", bundle: true,
+  loader: { ".css": "text" },
   platform: "browser", format: "cjs", jsx: "automatic", target: "es2022", minify: true,
   external: ["react", "react/*", "@deepseek-ai/cordis"], legalComments: "eof",
   banner: { js: 'window.__ModuleLoader__.load({id:"kaitu-auday",factory:(require)=>{var module={exports:{}};var exports=module.exports;' },
