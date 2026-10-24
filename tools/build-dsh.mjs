@@ -16,6 +16,7 @@ import { build } from "esbuild";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const modules = resolve(root, "node_modules");
+const linkModules = (directory) => symlinkSync(modules, directory, process.platform === "win32" ? "junction" : "dir");
 
 // Analyze the adapter and two SDK declaration packages in a temporary workspace.
 const analysis = mkdtempSync(join(tmpdir(), "auday-typert-"));
@@ -25,7 +26,7 @@ try {
   mkdirSync(resolve(pkg, "lib"), { recursive: true });
   cpSync(resolve(root, "adapters/dsh"), resolve(pkg, "src"), {
     recursive: true,
-    filter: (path) => !path.includes("/client"),
+    filter: (path) => !path.replaceAll("\\", "/").includes("/client"),
   });
   // The generator resolves lib exports back to their matching source entry.
   const manifest = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
@@ -33,7 +34,7 @@ try {
   manifest.exports = { ...exports, ".": "./lib/service.js" };
   writeFileSync(resolve(pkg, "package.json"), JSON.stringify(manifest));
   writeFileSync(resolve(pkg, "lib/typert.host.d.ts"), "export declare const TYPERT: unknown;\n");
-  symlinkSync(modules, resolve(pkg, "node_modules"));
+  linkModules(resolve(pkg, "node_modules"));
   for (const name of sdk) {
     const dir = resolve(analysis, "packages", name);
     cpSync(resolve(modules, `@deepseek-ai/${name}/lib/types`), resolve(dir, "src"), { recursive: true });
@@ -41,7 +42,7 @@ try {
       resolve(dir, "package.json"),
       JSON.stringify({ name: `@deepseek-ai/${name}`, exports: { ".": "./src/index.d.ts" } }),
     );
-    symlinkSync(modules, resolve(dir, "node_modules"));
+    linkModules(resolve(dir, "node_modules"));
   }
   const options = JSON.parse(readFileSync(resolve(root, "tsconfig.json"), "utf8"));
   options.compilerOptions.noEmit = false;
@@ -53,7 +54,7 @@ try {
     resolve(analysis, "tsconfig.base.json"),
     JSON.stringify({ compilerOptions: options.compilerOptions }),
   );
-  symlinkSync(modules, resolve(analysis, "node_modules"));
+  linkModules(resolve(analysis, "node_modules"));
   for (const dir of [pkg, ...sdk.map((name) => resolve(analysis, "packages", name))])
     writeFileSync(
       resolve(dir, "tsconfig.json"),

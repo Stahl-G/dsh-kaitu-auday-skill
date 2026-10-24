@@ -86,7 +86,7 @@ def check(history=False):
         if not path.exists():
             problems.append((str(path.relative_to(ROOT)), "missing-skill-document"))
             continue
-        for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
+        for target in re.findall(r"\]\(([^)]+)\)", path.read_text(encoding="utf-8")):
             if (
                 "://" not in target
                 and not target.startswith("#")

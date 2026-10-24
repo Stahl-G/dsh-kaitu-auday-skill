@@ -26,7 +26,7 @@ This repository provides **Auday’s desktop companion skill**. It brings the co
 
 ## Install through your desktop agent
 
-This fork adds an optional DSH 0.2.1-rc.2 / Kaitu adapter in `adapters/dsh/`.
+This fork adds an optional DSH 0.2.1-rc.3 / Kaitu adapter in `adapters/dsh/`.
 The common skill and upstream MIT license are preserved. See
 [host adapters and verification limits](references/hosts.md) before installing.
 
