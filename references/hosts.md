@@ -9,7 +9,7 @@ There is no host-specific transport protocol or automatic background sync.
 | Codex | Install the common skill in the configured local skills directory | The existing Mac installation is discoverable. This fork has not been installed over it. |
 | Claude Code | Common skill at `~/.claude/skills/auday/SKILL.md` or a project skill directory | [Official skill documentation](https://code.claude.com/docs/en/skills) documents these locations and supporting scripts. Discovery and local execution still require a host smoke test. |
 | WorkBuddy | Import the common skill using the application's installed-skills workflow | [Official skills page](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market) documents local skill management. An installation path, TTY behavior, and actual script execution have not been verified; do not infer them from Claude Code compatibility. |
-| DSH / Kaitu | Root npm bundle; separate `adapters/dsh/` UI and Host service | Targets DSH 0.2.1-rc.2. No model tool exposes arbitrary commands, passwords, or pairing. |
+| DSH / Kaitu | Root npm bundle; separate `adapters/dsh/` UI and Host service | Targets DSH 0.2.1-rc.3. No model tool exposes arbitrary commands, passwords, or pairing. |
 
 ## DSH on Mac
 
@@ -19,7 +19,12 @@ or starts a synchronization loop. The native Swift helper builds on first live
 connection using the installed toolchain. It is not a signed precompiled helper;
 clean-Mac packaging and platform permissions remain separate release checks.
 
-Version 0.1.2 is being prepared on the adapter branch; no 0.1.2 release is published.
+Version 0.1.3 is being prepared on the adapter branch; no 0.1.3 release is published.
+The package declares `engines.dsh: 0.2.1-rc.3`; compatibility with another DSH
+version requires its own verification. Windows can load the adapter page, but
+the shared Python/Swift core, including cached browsing and selected submission,
+requires macOS. On other platforms the adapter reports this before starting
+Python. Cancel remains available. The common skill's `VERSION` remains 0.5.1.
 For an approved local build, install the packed tarball through DSH's existing
 profile plugin manager. The earlier 0.1.0 experimental prerelease remains a
 separate, unmerged experiment and does not establish real-phone or clean-Mac
@@ -34,6 +39,8 @@ No manual export is needed. The desktop supplies `KAITU_DIR`; plain DSH must
 configure the bundle's `workspace` to an existing Kaitu workspace. `python` may
 select an installed interpreter. Cache and pairing use `DSH_HOME/auday/default`
 (or `~/.dsh/auday/default`), separate from an existing common-skill installation.
+Removing the plugin package does not remove this cache, Keychain entries, or
+notes already submitted to the workspace. Data cleanup is a separate user action.
 
 The adapter writes completed plain Markdown to `inbox/agents`; Kaitu's existing
 watcher processes it. It does not write goals, memories, or actions. This depends

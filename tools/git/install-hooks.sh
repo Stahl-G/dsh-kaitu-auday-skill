@@ -6,7 +6,8 @@ fail() { printf '%s\n' "$*" >&2; exit 1; }
 script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 repo_root=$(CDPATH= cd "$script_dir/../.." && pwd -P)
 cd "$repo_root"
-[ "$(git rev-parse --show-toplevel)" = "$repo_root" ] || fail "Install this tool at the repository root's tools/git directory."
+git_root=$(git rev-parse --show-toplevel)
+[ "$(CDPATH= cd "$git_root" && pwd -P)" = "$repo_root" ] || fail "Install this tool at the repository root's tools/git directory."
 command -v python3 >/dev/null 2>&1 || fail "python3 is required. No packages were installed."
 git lfs version >/dev/null 2>&1 || fail "Git LFS is required. Install it before running this script."
 

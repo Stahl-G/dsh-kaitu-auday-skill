@@ -4,6 +4,22 @@ import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AudayRunner, submitNotes } from '../adapters/dsh/runner.mjs';
+import { AudayService } from '../dist/index.js';
+import { Context } from '@deepseek-ai/cordis';
+
+test('unsupported hosts reject core operations before starting Python; cancel remains available', {
+  skip: process.platform === 'darwin',
+}, async () => {
+  let closed = false;
+  const service = new AudayService(new Context(), {
+    run() { assert.fail('Unsupported host started the macOS core'); },
+    async close() { closed = true; },
+  }, '/synthetic');
+  for (const operation of ['doctor', 'discover', 'pair', 'sync', 'search', 'preview', 'import'])
+    await assert.rejects(service.request(operation, '{}'), /^Error: macOS_required$/);
+  assert.equal(await service.request('cancel', '{}'), '{}');
+  assert.equal(closed, true);
+});
 
 test('selected revisions enter the existing inbox once per pending file', () => {
   const root = mkdtempSync(join(tmpdir(), 'auday-inbox-'));

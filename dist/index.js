@@ -205,6 +205,7 @@ var AudayService = class extends (_a = TypertRemoteService, _request_dec = [Remo
       await this.runner.close();
       return "{}";
     }
+    if (process.platform !== "darwin") throw new Error("macOS_required");
     if (operation === "import") {
       const preview = await this.runner.run("preview", args);
       if (JSON.stringify(preview.notes.map((note) => note.name)) !== JSON.stringify(args.names))

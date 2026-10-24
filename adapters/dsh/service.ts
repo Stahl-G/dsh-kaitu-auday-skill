@@ -17,6 +17,8 @@ export class AudayService extends TypertRemoteService {
   async request(operation: string, input: string): Promise<string> {
     const args = JSON.parse(input);
     if (operation === 'cancel') { await this.runner.close(); return '{}'; }
+    // The shared Python/Swift core and native password dialog are macOS-only.
+    if (process.platform !== 'darwin') throw new Error('macOS_required');
     if (operation === 'import') {
       const preview = await this.runner.run('preview', args);
       if (JSON.stringify(preview.notes.map((note: { name: string }) => note.name)) !== JSON.stringify(args.names))
