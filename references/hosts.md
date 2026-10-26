@@ -1,76 +1,40 @@
-# Desktop hosts and the optional DSH adapter
+# Desktop hosts and the DSH adapter
 
-The root `SKILL.md`, `scripts/`, and references are the common skill. Connection,
-sync, cached search, and selected-note rendering use the same Python/Swift core.
-There is no host-specific transport protocol or automatic background sync.
+The common skill uses `SKILL.md`, `scripts/`, and relative references. Install it
+through the host's skill importer or supported local skill directory:
 
-| Host | Entry point | Evidence and limits |
-| --- | --- | --- |
-| Codex | Install the common skill in the configured local skills directory | The existing Mac installation is discoverable. This fork has not been installed over it. |
-| Claude Code | Common skill at `~/.claude/skills/auday/SKILL.md` or a project skill directory | [Official skill documentation](https://code.claude.com/docs/en/skills) documents these locations and supporting scripts. Discovery and local execution still require a host smoke test. |
-| WorkBuddy | Import the common skill using the application's installed-skills workflow | [Official skills page](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market) documents local skill management. An installation path, TTY behavior, and actual script execution have not been verified; do not infer them from Claude Code compatibility. |
-| DSH / Kaitu | Root npm bundle; separate `adapters/dsh/` UI and Host service | Targets DSH 0.2.1-rc.3. No model tool exposes arbitrary commands, passwords, or pairing. |
+| Host | Installation |
+| --- | --- |
+| Codex | Configured local skills directory |
+| Claude Code | `~/.claude/skills/auday/` or a project skill directory; see [skill locations](https://code.claude.com/docs/en/skills) |
+| WorkBuddy | Application's [installed-skills workflow](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market) |
+| DSH / Kaitu | Packed npm bundle through DSH's profile plugin manager |
 
-## DSH on Mac
+## DSH / Kaitu
 
-The adapter requires existing Python 3 and Xcode Command Line Tools. It never
-runs `bootstrap.sh`, installs software or models, accepts terms, transcribes,
-or starts a synchronization loop. The native Swift helper builds on first live
-connection using the installed toolchain. It is not a signed precompiled helper;
-clean-Mac packaging and platform permissions remain separate release checks.
+The adapter targets DSH **0.2.1-rc.3** and requires macOS, existing Python 3,
+and Xcode Command Line Tools with Swift 5.9 or later. Windows can load the page;
+connection, cached browsing and import require macOS. The Swift helper builds
+from the installed sources on the first live connection. The adapter does not
+run the common skill's bootstrap or install software or models.
 
-Version 0.1.3 is being prepared on the adapter branch; no 0.1.3 release is published.
-The package declares `engines.dsh: 0.2.1-rc.3`; compatibility with another DSH
-version requires its own verification. Windows can load the adapter page, but
-the shared Python/Swift core, including cached browsing and selected submission,
-requires macOS. On other platforms the adapter reports this before starting
-Python. Cancel remains available. The common skill's `VERSION` remains 0.5.1.
-For an approved local build, install the packed tarball through DSH's existing
-profile plugin manager. The earlier 0.1.0 experimental prerelease remains a
-separate, unmerged experiment and does not establish real-phone or clean-Mac
-support. Check prerequisites, find the phone, and choose Connect. This explicit action opens a native hidden
-password dialog and saves successful pairing through the upstream Keychain code.
-The original TTY pairing path is retained for common skill hosts. Cancel or page
-unmount terminates the adapter's managed subprocess range.
+Choose **Check prerequisites**, find the phone, then **Connect**. Enter the
+communication password in the native local dialog; successful pairing saves it
+in Keychain. **Sync once** captures one snapshot. Browse the local copy, select
+records, preview, and submit them to the Kaitu inbox. Cancel or leaving the page
+terminates the managed operation.
 
-Sync once captures a single upstream snapshot. Browse the cached copy, select
-records, preview their text and state, then submit them as pending inbox notes.
-No manual export is needed. The desktop supplies `KAITU_DIR`; plain DSH must
-configure the bundle's `workspace` to an existing Kaitu workspace. `python` may
-select an installed interpreter. Cache and pairing use `DSH_HOME/auday/default`
-(or `~/.dsh/auday/default`), separate from an existing common-skill installation.
-Removing the plugin package does not remove this cache, Keychain entries, or
-notes already submitted to the workspace. Data cleanup is a separate user action.
+Kaitu supplies `KAITU_DIR`. Plain DSH needs an explicit `workspace` pointing to an
+existing Kaitu workspace; `python` can select an installed interpreter. Cache
+and pairing configuration use `$DSH_HOME/auday/default` (default
+`~/.dsh/auday/default`), separate from the common skill. Uninstalling the plugin
+keeps this cache, Keychain entries, and previously submitted notes.
 
-The adapter writes completed plain Markdown to `inbox/agents`; Kaitu's existing
-watcher processes it. It does not write goals, memories, or actions. This depends
-on the ordinary-file resend handling in Kaitu main `a9544c6` or later. Filenames
-encode device ID, record ID and the full record revision; note bytes exclude
-sync/export time. The host's existing basename-plus-raw receipt skips identical
-resends, including after processing or restart. Changed content becomes a
-separate source revision for review. Rejected and candidate memories retain
-their source states. Source text and full payload are fenced as inert data.
+Imports publish completed Markdown in `inbox/agents`. Kaitu's watcher handles
+processing and deduplication; it needs the ordinary-file resend support in
+Kaitu commit `a9544c6` or later. Source identity and revision determine the
+filename, so identical resends are stable while changed content is a new
+revision. Original source states and timestamps remain attached to the notes.
 
-## Development checks
-
-`npm run build` generates the Typert contribution and distributable artifacts.
-Build dependencies are pinned in `package.json`; none are downloaded by tests.
-Run `npm run typecheck`, `npm test`, and
-`python3 -m unittest discover -s tests -p test_handoff.py`.
-The upstream public-source Git guards require Git LFS. Enable them only in this
-checkout with `sh tools/git/install-hooks.sh`.
-
-Synthetic rendering, pending-file retry, and lifecycle checks do not establish
-real iPhone pairing, native-dialog dismissal on application exit, a clean Mac
-installation, or WorkBuddy/Claude Code runtime compatibility. Those checks need
-their own evidence; persistent pairing and private data access require the
-user's authorization for that session.
-
-The page reads Kaitu's surface, text, control and feedback color variables, with
-the desktop C palette as its standalone fallback. It follows DSH/system dark
-mode. The existing host route `#kaitu-page=kaitu-auday&kaitu-embed=1` suppresses
-the plugin title; the host still owns its loader, navigation and iframe lifetime.
-Content embedding requires Kaitu's host integration in PR #121 (not main at the
-time of this update); no new loader or theme messaging protocol is provided.
-Prerequisite checks reuse the common core's selected CLT/Swift checks before
-live operations; the system Python shim is not started when CLT is absent.
+The embedded route is `#kaitu-page=kaitu-auday&kaitu-embed=1`; Kaitu owns the
+loader and navigation. The page follows the host's colors and dark mode.

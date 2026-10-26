@@ -89,6 +89,11 @@ await build({ entryPoints: ["adapters/dsh/service.ts"], outfile: "dist/index.js"
   platform: "node", target: "node22", format: "esm",
   external: ["@deepseek-ai/cordis", "@deepseek-ai/dsh-typert-protocol"], legalComments: "eof" });
 await build({ entryPoints: ["adapters/dsh/client.tsx"], outfile: "dist/client.js", bundle: true,
+  plugins: [{ name: "client-zod", setup(build) {
+    build.onResolve({ filter: /^zod$/ }, ({ importer }) =>
+      resolve(importer) === resolve(root, "lib/typert.remote-client.js")
+        ? { path: resolve(root, "adapters/dsh/client-zod.ts") } : undefined);
+  } }],
   loader: { ".css": "text" },
   platform: "browser", format: "cjs", jsx: "automatic", target: "es2022", minify: true,
   external: ["react", "react/*", "@deepseek-ai/cordis"], legalComments: "eof",

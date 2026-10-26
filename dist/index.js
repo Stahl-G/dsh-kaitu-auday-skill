@@ -132,6 +132,7 @@ var AudayRunner = class {
             continue;
           }
           const code = typeof error === "string" ? error.split(":")[0] : "";
+          if (code === "swift_missing") throw new Error("swift_toolchain_unavailable");
           if (known.includes(code)) throw new Error(code);
         }
         throw new Error("operation_failed");
@@ -152,13 +153,17 @@ var AudayRunner = class {
           throw new Error("apple_command_line_tools_missing");
       }
       const command = (...args2) => [python, join(this.root, "scripts/auday.py"), "--home", this.home, ...args2];
-      if (["discover", "pair", "sync"].includes(operation)) {
-        const doctor = parse(await execute(command("doctor")));
-        const tools = doctor.capabilities.core.connectionToolchain;
-        if (!tools.ready) throw new Error(tools.reason);
-        if (operation === "sync" && !doctor.capabilities.paired) throw new Error("not_paired");
+      try {
+        return parse(await execute(command(...args), operation === "preview" ? { data: JSON.stringify(input.ids) } : "ignore"));
+      } catch (error) {
+        if (error.message === "operation_failed" && ["discover", "pair", "sync"].includes(operation)) {
+          const doctor = parse(await execute(command("doctor")));
+          const reason = doctor.capabilities.core.connectionToolchain.reason;
+          if (["apple_command_line_tools_missing", "swift_toolchain_unavailable", "swift_5_9_or_later_required"].includes(reason))
+            throw new Error(reason);
+        }
+        throw error;
       }
-      return parse(await execute(command(...args), operation === "preview" ? { data: JSON.stringify(input.ids) } : "ignore"));
     } finally {
       this.controllers.delete(controller);
     }
