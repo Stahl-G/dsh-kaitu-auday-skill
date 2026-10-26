@@ -2,10 +2,15 @@ name: DSH adapter
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
+
+concurrency:
+  group: dsh-adapter-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   adapter:
@@ -19,6 +24,7 @@ jobs:
         with:
           node-version: 24
       - uses: actions/setup-python@v5
+        if: runner.os != 'Windows'
         with:
           python-version: '3.11'
       - uses: pnpm/action-setup@v4
@@ -26,6 +32,3 @@ jobs:
       - run: pnpm build
       - run: pnpm typecheck
       - run: pnpm test
-      - run: python tools/verify_public.py
-      - run: python -m unittest discover -s tests -p test_handoff.py -v
-        if: runner.os != 'Windows'

@@ -17,7 +17,6 @@ export class AudayService extends TypertRemoteService {
   async request(operation: string, input: string): Promise<string> {
     const args = JSON.parse(input);
     if (operation === 'cancel') { await this.runner.close(); return '{}'; }
-    // The shared Python/Swift core and native password dialog are macOS-only.
     if (process.platform !== 'darwin') throw new Error('macOS_required');
     if (operation === 'import') {
       const preview = await this.runner.run('preview', args);
@@ -29,7 +28,6 @@ export class AudayService extends TypertRemoteService {
   }
 }
 
-/** The desktop supplies KAITU_DIR; plain DSH can configure an explicit workspace. */
 export function apply(ctx: Context, config: Config = {}) {
   const root = fileURLToPath(new URL('../', import.meta.url));
   const runner = new AudayRunner(ctx.get('subprocess'), root,

@@ -2,7 +2,6 @@ import { existsSync, linkSync, mkdirSync, unlinkSync, writeFileSync } from 'node
 import { randomUUID } from 'node:crypto';
 import { isAbsolute, join } from 'node:path';
 
-/** Fixed Auday operations. The subprocess provider owns descendants and cancellation. */
 export class AudayRunner {
   constructor(subprocess, root, home, python = 'python3') {
     Object.assign(this, { subprocess, root, home, python });
@@ -56,6 +55,7 @@ export class AudayRunner {
           let error;
           try { error = JSON.parse(line).error; } catch { continue; }
           const code = typeof error === 'string' ? error.split(':')[0] : '';
+          if (code === 'swift_missing') throw new Error('swift_toolchain_unavailable');
           if (known.includes(code)) throw new Error(code);
         }
         throw new Error('operation_failed');
@@ -76,20 +76,24 @@ export class AudayRunner {
           throw new Error('apple_command_line_tools_missing');
       }
       const command = (...args) => [python, join(this.root, 'scripts/auday.py'), '--home', this.home, ...args];
-      if (['discover', 'pair', 'sync'].includes(operation)) {
-        const doctor = parse(await execute(command('doctor')));
-        const tools = doctor.capabilities.core.connectionToolchain;
-        if (!tools.ready) throw new Error(tools.reason);
-        if (operation === 'sync' && !doctor.capabilities.paired) throw new Error('not_paired');
+      try {
+        return parse(await execute(command(...args), operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore'));
+      } catch (error) {
+        // Diagnose toolchain failures on demand; successful operations need no full doctor scan.
+        if (error.message === 'operation_failed' && ['discover', 'pair', 'sync'].includes(operation)) {
+          const doctor = parse(await execute(command('doctor')));
+          const reason = doctor.capabilities.core.connectionToolchain.reason;
+          if (['apple_command_line_tools_missing', 'swift_toolchain_unavailable', 'swift_5_9_or_later_required'].includes(reason))
+            throw new Error(reason);
+        }
+        throw error;
       }
-      return parse(await execute(command(...args), operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore'));
     } finally {
       this.controllers.delete(controller);
     }
   }
 }
 
-/** Submit stable, selected revisions to Kaitu's existing plain-Markdown inbox. */
 export function submitNotes(workspace, notes) {
   if (!isAbsolute(workspace) || !existsSync(join(workspace, '.kaitu/config.json')))
     throw new Error('workspace_missing');
