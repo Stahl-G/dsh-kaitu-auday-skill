@@ -20,13 +20,18 @@ const labels = {
 };
 
 function useTheme() {
-  const read = () => document.body.hasAttribute('data-ds-dark-theme') || matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const read = () => {
+    const scheme = document.documentElement.style.colorScheme;
+    if (scheme === 'light' || scheme === 'dark') return scheme;
+    return document.body.hasAttribute('data-ds-dark-theme') || (!scheme && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  };
   const [theme, setTheme] = useState(read);
   useEffect(() => {
     const update = () => setTheme(read());
     const media = matchMedia('(prefers-color-scheme: dark)');
     const observer = new MutationObserver(update);
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
     media.addEventListener('change', update);
     return () => { observer.disconnect(); media.removeEventListener('change', update); };
   }, []);

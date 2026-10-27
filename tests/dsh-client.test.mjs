@@ -8,13 +8,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import canonical from '../lib/typert.remote-client.js';
 
 const require = createRequire(import.meta.url);
-async function loadClient(language = 'en', embedded = false, dark = false) {
+async function loadClient(language = 'en', embedded = false, dark = false, hostScheme = '', bodyDark = dark) {
   let client, contribution;
   const registrations = [], calls = [];
   runInNewContext(readFileSync(new URL('../dist/client.js', import.meta.url), 'utf8'), {
     URLSearchParams,
     navigator: { language },
-    document: { body: { hasAttribute: () => dark } },
+    document: { documentElement: { style: { colorScheme: hostScheme } }, body: { hasAttribute: () => bodyDark } },
     matchMedia: () => ({ matches: dark }),
     window: {
       location: { hash: embedded ? '#kaitu-page=kaitu-auday&kaitu-embed=1' : '#kaitu-page=kaitu-auday' },
@@ -75,5 +75,23 @@ test('standalone and embedded pages render in both languages and themes without 
     assert.ok(html.includes(language === 'zh' ? '检查依赖' : 'Check prerequisites'));
     assert.ok(html.includes(`data-theme="${dark ? 'dark' : 'light'}"`));
     assert.equal(calls.length, 0);
+  }
+});
+
+test('explicit host theme overrides the system and legacy body theme', async () => {
+  for (const hostScheme of ['light', 'dark']) for (const dark of [false, true]) {
+    const { registrations } = await loadClient('en', false, dark, hostScheme);
+    const main = registrations.find(({ meta }) => meta.name === 'main');
+    const html = renderToStaticMarkup(React.createElement(main.component, main.meta.inject()));
+    assert.ok(html.includes(`data-theme="${hostScheme}"`));
+  }
+});
+
+test('combined host schemes use the resolved body theme', async () => {
+  for (const hostScheme of ['light dark', 'dark light']) for (const dark of [false, true]) for (const bodyDark of [false, true]) {
+    const { registrations } = await loadClient('en', false, dark, hostScheme, bodyDark);
+    const main = registrations.find(({ meta }) => meta.name === 'main');
+    const html = renderToStaticMarkup(React.createElement(main.component, main.meta.inject()));
+    assert.ok(html.includes(`data-theme="${bodyDark ? 'dark' : 'light'}"`));
   }
 });
