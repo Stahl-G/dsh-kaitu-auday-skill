@@ -53,7 +53,7 @@ test('bundled client resolves with only host React and preserves Typert input/re
       { operation: 'search', input: null }, { operation: 'search', input: '{}', extra: true }]) {
       const parsed = a.create().safeParse(value), host = e.create().safeParse(value);
       assert.equal(parsed.success, host.success);
-      if (parsed.success && host.success) assert.deepEqual(parsed.data, host.data);
+      if (parsed.success && host.success) assert.equal(JSON.stringify(parsed.data), JSON.stringify(host.data));
     }
   }
   for (const value of ['{}', 7, null, {}])

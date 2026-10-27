@@ -128,7 +128,7 @@ test('command failures keep a safe code and do not start a second doctor scan', 
   const runner = new AudayRunner({
     resolveExecutable: async () => '/synthetic-python',
     spawn({ argv }) {
-      calls.push(argv.at(-1));
+      calls.push(argv[argv.indexOf('--home') + 2]);
       const text = JSON.stringify(failure ? { ok: false, error: failure } : { services: [] });
       return {
         done: Promise.resolve({ exitCode: failure ? 1 : 0 }),
@@ -144,6 +144,6 @@ test('command failures keep a safe code and do not start a second doctor scan', 
   await assert.rejects(runner.run('pair', { service: 'synthetic-phone' }), /^Error: operation_failed$/);
   failure = 'swift_missing: private path';
   await assert.rejects(runner.run('discover'), /^Error: swift_toolchain_unavailable$/);
-  assert.deepEqual(calls, ['discover', 'pair', 'pair', 'discover']);
+  assert.deepEqual(calls, ['discover', 'pair-dialog', 'pair-dialog', 'discover']);
   assert.equal(runner.children.size, 0);
 });
