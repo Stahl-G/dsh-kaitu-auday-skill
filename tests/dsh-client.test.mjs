@@ -41,6 +41,8 @@ async function loadClient(language = 'en', embedded = false, dark = false, hostS
 }
 
 test('bundled client resolves with only host React and preserves Typert input/result codecs', async () => {
+  const source = readFileSync(new URL('../dist/client.js', import.meta.url), 'utf8');
+  assert.equal(source.includes('$Zod'), false);
   const { contribution, registrations, calls } = await loadClient();
   const actual = contribution.descriptors[0], expected = canonical.descriptors[0];
   assert.equal(actual.id, expected.id);
@@ -49,10 +51,9 @@ test('bundled client resolves with only host React and preserves Typert input/re
     assert.equal(JSON.stringify(a.jsonSchema), JSON.stringify(e.jsonSchema));
     for (const value of [{ operation: 'search', input: '{}' }, {}, { operation: 7, input: '{}' },
       { operation: 'search', input: null }, { operation: 'search', input: '{}', extra: true }]) {
-      const actual = a.create().safeParse(value), expected = e.create().safeParse(value);
-      assert.equal(actual.success, expected.success);
-      assert.equal(JSON.stringify(actual.success ? actual.data : actual.error.issues),
-        JSON.stringify(expected.success ? expected.data : expected.error.issues));
+      const parsed = a.create().safeParse(value), host = e.create().safeParse(value);
+      assert.equal(parsed.success, host.success);
+      if (parsed.success && host.success) assert.equal(JSON.stringify(parsed.data), JSON.stringify(host.data));
     }
   }
   for (const value of ['{}', 7, null, {}])

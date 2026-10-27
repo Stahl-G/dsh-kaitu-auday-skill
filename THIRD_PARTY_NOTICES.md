@@ -30,17 +30,18 @@ No Auday app source, third-party application logos, model weights, personal reco
 
 ## DSH adapter
 
-The browser artifact bundles selected Zod 4.4.3 validators and Typert metadata
-from DeepSeek Harness 0.2.1-rc.3. React and Cordis are supplied by the host.
-The build setup is adapted from dsh-kaitu-fortune.
+React and Cordis are supplied by the host. The host face depends on Zod 4.4.3.
+The browser page checks its two request strings without bundling Zod. Typert
+metadata comes from DeepSeek Harness 0.2.1-rc.3. The build setup is adapted
+from dsh-kaitu-fortune.
 
 The following components use the MIT license reproduced below:
 
-| Component | Copyright | Source |
+| Component | Use | Source |
 | --- | --- | --- |
-| Zod | Copyright (c) 2025 Colin McDonnell | https://github.com/colinhacks/zod |
-| DeepSeek Harness | Copyright (c) 2026 DeepSeek | https://github.com/deepseek-ai/deepseek-harness |
-| dsh-kaitu-fortune | Copyright (c) 2026 Guo Yihong | https://github.com/Stahl-G/dsh-kaitu-fortune |
+| Zod | Host-face parsers. Copyright (c) 2025 Colin McDonnell | https://github.com/colinhacks/zod |
+| DeepSeek Harness | Generated Typert metadata. Copyright (c) 2026 DeepSeek | https://github.com/deepseek-ai/deepseek-harness |
+| dsh-kaitu-fortune | Build setup. Copyright (c) 2026 Guo Yihong | https://github.com/Stahl-G/dsh-kaitu-fortune |
 
 MIT License
 
