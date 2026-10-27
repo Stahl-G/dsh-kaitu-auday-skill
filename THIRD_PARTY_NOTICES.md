@@ -27,3 +27,37 @@ FFmpeg binary is a GPL-enabled build; the audited arm64 wheel reports
 GPL-2.0-or-later. Preserve and consult the installed wheel's license files.
 
 No Auday app source, third-party application logos, model weights, personal recordings, or private datasets are bundled. Tests generate synthetic data locally.
+
+## DSH adapter
+
+The browser artifact bundles selected Zod 4.4.3 validators and Typert metadata
+from DeepSeek Harness 0.2.1-rc.3. React and Cordis are supplied by the host.
+The build setup is adapted from dsh-kaitu-fortune.
+
+The following components use the MIT license reproduced below:
+
+| Component | Copyright | Source |
+| --- | --- | --- |
+| Zod | Copyright (c) 2025 Colin McDonnell | https://github.com/colinhacks/zod |
+| DeepSeek Harness | Copyright (c) 2026 DeepSeek | https://github.com/deepseek-ai/deepseek-harness |
+| dsh-kaitu-fortune | Copyright (c) 2026 Guo Yihong | https://github.com/Stahl-G/dsh-kaitu-fortune |
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

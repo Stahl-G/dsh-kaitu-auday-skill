@@ -26,6 +26,9 @@ This repository provides **Auday’s desktop companion skill**. It brings the co
 
 ## Install through your desktop agent
 
+For the optional DSH 0.2.1-rc.3 / Kaitu adapter, see
+[host installation](references/hosts.md).
+
 Open a desktop agent that supports local skills and send:
 
 > Install the Auday skill from https://github.com/666ghj/auday-skill for this application. Complete first-run setup, recommend local semantic search, and guide me through connecting Auday on my iPhone. Install transcription tools only when I need them.
