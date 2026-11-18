@@ -79,6 +79,11 @@ try {
     if (artifact.remote) {
       writeFileSync(resolve(root, "lib/typert.remote-client.js"), artifact.remote.js);
       writeFileSync(resolve(root, "lib/typert.remote-client.d.ts"), artifact.remote.dts);
+      const sourceMap = JSON.parse(artifact.remote.dtsMap);
+      sourceMap.sources = sourceMap.sources.map((path) => path.replace("../src/", "../adapters/dsh/"));
+      sourceMap.sourcesContent = sourceMap.sources.map((path) =>
+        readFileSync(resolve(root, "lib", path), "utf8"));
+      writeFileSync(resolve(root, "lib/typert.remote-client.d.ts.map"), `${JSON.stringify(sourceMap)}\n`);
     }
   }
 } finally {
