@@ -76,18 +76,7 @@ export class AudayRunner {
           throw new Error('apple_command_line_tools_missing');
       }
       const command = (...args) => [python, join(this.root, 'scripts/auday.py'), '--home', this.home, ...args];
-      try {
-        return parse(await execute(command(...args), operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore'));
-      } catch (error) {
-        // Diagnose toolchain failures on demand; successful operations need no full doctor scan.
-        if (error.message === 'operation_failed' && ['discover', 'pair', 'sync'].includes(operation)) {
-          const doctor = parse(await execute(command('doctor')));
-          const reason = doctor.capabilities.core.connectionToolchain.reason;
-          if (['apple_command_line_tools_missing', 'swift_toolchain_unavailable', 'swift_5_9_or_later_required'].includes(reason))
-            throw new Error(reason);
-        }
-        throw error;
-      }
+      return parse(await execute(command(...args), operation === 'preview' ? { data: JSON.stringify(input.ids) } : 'ignore'));
     } finally {
       this.controllers.delete(controller);
     }

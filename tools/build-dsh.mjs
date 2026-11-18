@@ -99,6 +99,3 @@ await build({ entryPoints: ["adapters/dsh/client.tsx"], outfile: "dist/client.js
   external: ["react", "react/*", "@deepseek-ai/cordis"], legalComments: "eof",
   banner: { js: 'window.__ModuleLoader__.load({id:"kaitu-auday",factory:(require)=>{var module={exports:{}};var exports=module.exports;' },
   footer: { js: "return module.exports;}});" } });
-// Zod's generated function templates contain whitespace-only lines.
-const clientArtifact = resolve(root, "dist/client.js");
-writeFileSync(clientArtifact, readFileSync(clientArtifact, "utf8").replace(/^[\t ]+$/gm, ""));

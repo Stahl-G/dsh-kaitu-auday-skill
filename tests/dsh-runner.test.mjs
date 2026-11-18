@@ -122,35 +122,28 @@ test('real unpaired Python sync returns not_paired in one command', {
   } finally { await runner.close(); rmSync(home, { recursive: true }); }
 });
 
-test('healthy connection commands skip doctor; only unknown failures request toolchain diagnosis', async () => {
+test('command failures keep a safe code and do not start a second doctor scan', async () => {
   const calls = [];
-  let failure, reason = null;
+  let failure;
   const runner = new AudayRunner({
     resolveExecutable: async () => '/synthetic-python',
     spawn({ argv }) {
-      calls.push(argv.at(-1));
-      const doctor = argv.at(-1) === 'doctor';
-      const text = doctor ? JSON.stringify({ capabilities: { core: { connectionToolchain: { reason } } } })
-        : JSON.stringify(failure ? { ok: false, error: failure } : { services: [] });
+      calls.push(argv[argv.indexOf('--home') + 2]);
+      const text = JSON.stringify(failure ? { ok: false, error: failure } : { services: [] });
       return {
-        done: Promise.resolve({ exitCode: doctor || !failure ? 0 : 1 }),
+        done: Promise.resolve({ exitCode: failure ? 1 : 0 }),
         collected: { stdout: { readFrom: () => ({ lossy: false, text }) } },
         terminate() {}, async waitForExit() {},
       };
     },
   }, '/synthetic', '/synthetic-cache');
   await runner.run('discover');
-  assert.deepEqual(calls, ['discover']);
   failure = 'password_input_cancelled';
   await assert.rejects(runner.run('pair', { service: 'synthetic-phone' }), /^Error: password_input_cancelled$/);
-  assert.equal(calls.includes('doctor'), false);
   failure = 'unrecognized private data';
   await assert.rejects(runner.run('pair', { service: 'synthetic-phone' }), /^Error: operation_failed$/);
-  assert.equal(calls.at(-1), 'doctor');
-  reason = 'swift_5_9_or_later_required';
-  await assert.rejects(runner.run('discover'), /^Error: swift_5_9_or_later_required$/);
   failure = 'swift_missing: private path';
   await assert.rejects(runner.run('discover'), /^Error: swift_toolchain_unavailable$/);
-  assert.equal(calls.at(-1), 'discover');
+  assert.deepEqual(calls, ['discover', 'pair-dialog', 'pair-dialog', 'discover']);
   assert.equal(runner.children.size, 0);
 });
