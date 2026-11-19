@@ -16,7 +16,8 @@ jobs:
   adapter:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Match the existing native validation lane; retain arm64 and every adapter check.
+        os: [ubuntu-latest, windows-latest, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

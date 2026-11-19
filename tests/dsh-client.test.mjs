@@ -97,3 +97,12 @@ test('combined host schemes use the resolved body theme', async () => {
     assert.ok(html.includes(`data-theme="${bodyDark ? 'dark' : 'light'}"`));
   }
 });
+
+test('remote declaration map ships its public source without temporary paths', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const mapPath = 'lib/typert.remote-client.d.ts.map';
+  assert.ok(manifest.files.includes(mapPath));
+  const map = JSON.parse(readFileSync(new URL(`../${mapPath}`, import.meta.url), 'utf8'));
+  assert.deepEqual(map.sources, ['../adapters/dsh/service.ts']);
+  assert.deepEqual(map.sourcesContent, [readFileSync(new URL('../adapters/dsh/service.ts', import.meta.url), 'utf8')]);
+});
