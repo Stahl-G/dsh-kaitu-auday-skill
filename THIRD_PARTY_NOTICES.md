@@ -31,7 +31,7 @@ No Auday app source, third-party application logos, model weights, personal reco
 ## DSH adapter
 
 The browser artifact bundles selected Zod 4.4.3 validators and Typert metadata
-from DeepSeek Harness 0.2.2-rc.4. React and Cordis are supplied by the host.
+from DeepSeek Harness 0.2.3-alpha.2. React and Cordis are supplied by the host.
 The build setup is adapted from dsh-kaitu-fortune.
 
 The following components use the MIT license reproduced below:
